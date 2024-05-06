@@ -36,6 +36,29 @@ export default {
     return client.pget(`/api/data/tasks/${taskId}/previews`)
   },
 
+  checkFileTask(data) {
+    const commentData =
+      '?project=' +
+      data.production +
+      '&department=' +
+      data.department +
+      '&task_type=' +
+      data.task_type +
+      '&season=' +
+      data.season +
+      '&episodes=' +
+      data.episodes +
+      '&shot=' +
+      data.shot +
+      '&number=' +
+      data.number +
+      '&name=' +
+      data.name +
+      '&UE_Version=' +
+      data.UE_Version
+    return client.pget(`http://192.168.20.2/api/file_exists` + commentData)
+  },
+
   commentTask(data) {
     let commentData = {
       task_status_id: data.taskStatusId,

@@ -141,6 +141,7 @@ const getters = {
       isArtistAllowed: status.is_artist_allowed
     })),
 
+  selectedValidations: state => state.selectedValidations,
   selectedTasks: state => state.selectedTasks,
   nbSelectedTasks: state => state.nbSelectedTasks,
   nbSelectedValidations: state => state.nbSelectedValidations,
@@ -490,6 +491,37 @@ const actions = {
       })
       return Promise.resolve()
     })
+  },
+
+  checkFileTask(
+    { commit, state },
+    {
+      production,
+      department,
+      task_type,
+      season,
+      episodes,
+      shot,
+      number,
+      name,
+      UE_Version
+    }
+  ) {
+    return tasksApi
+      .checkFileTask({
+        production,
+        department,
+        task_type,
+        season,
+        episodes,
+        shot,
+        number,
+        name,
+        UE_Version
+      })
+      .then(comment => {
+        return Promise.resolve(comment)
+      })
   },
 
   commentTask(
@@ -1160,6 +1192,10 @@ const mutations = {
     } else if (validationInfo.task) {
       state.selectedTasks.set(validationInfo.task.id, validationInfo.task)
       state.selectedTasks = new Map(state.selectedTasks) // for reactivity
+      state.nbSelectedTasks = state.selectedTasks.size
+      //-------------------
+      state.selectedValidations.set(validationInfo.task.id, validationInfo)
+      state.selectedValidations = new Map(state.selectedValidations) // for reactivity
       state.nbSelectedTasks = state.selectedTasks.size
     } else {
       const taskTypeId = validationInfo.column.id

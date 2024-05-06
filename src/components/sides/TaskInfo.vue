@@ -480,7 +480,9 @@ export default {
       'nbSelectedValidations',
       'taskEntityPreviews',
       'taskTypeMap',
-      'user'
+      'user',
+      'selectedValidations',
+      'departmentMap'
     ]),
 
     sideColumnParent() {
@@ -769,6 +771,85 @@ export default {
     },
 
     addComment(
+      comment,
+      attachment,
+      checklist,
+      taskStatusId,
+      revision = undefined
+    ) {
+      const theTaskType = this.taskTypeMap.get(this.task.task_type_id)
+      const department = this.departmentMap.get(theTaskType.department_id).name
+      if (
+        department.includes('角色') ||
+        department.includes('绑定') ||
+        department.includes('动画') ||
+        department.includes('特效') ||
+        department.includes('地编') ||
+        department.includes('角色模型')
+      ) {
+        const validation = this.selectedValidations.get(this.task.id)
+        const production = validation.entity.project_name
+        const data = validation.entity.data
+        let task_type = ''
+        let episodes = ''
+        let shot = ''
+        if (theTaskType.for_entity.includes('Shot')) {
+          task_type = theTaskType.name
+          episodes = validation.entity.sequence_name.replaceAll('EP', '') ?? ''
+          shot = validation.entity.name.replaceAll('SC', '') ?? ''
+        } else {
+          task_type = validation.entity.asset_type_name ?? ''
+        }
+        const season = data.ji_shu ?? ''
+        const name = data.pin_yin_ming_cheng ?? ''
+        const number = data.bian_hao ?? ''
+        const UE_Version = data.ban_ben ?? 5
+        //--------------
+        const params = {
+          production,
+          department,
+          task_type,
+          season,
+          episodes,
+          shot,
+          number,
+          name,
+          UE_Version
+        }
+        const action = 'checkFileTask'
+        this.$store
+          .dispatch(action, params)
+          .then(res => {
+            console.log('checkFileThen:' + res.error_code)
+            if (res.result == 'true') {
+              this.addCommentEnd(
+                comment,
+                attachment,
+                checklist,
+                taskStatusId,
+                (revision = undefined)
+              )
+            } else {
+              alert(res.msg)
+            }
+          })
+          .catch(err => {
+            console.log('checkFileError')
+            console.error(err)
+            alert(err.message)
+          })
+      } else {
+        this.addCommentEnd(
+          comment,
+          attachment,
+          checklist,
+          taskStatusId,
+          (revision = undefined)
+        )
+      }
+    },
+
+    addCommentEnd(
       comment,
       attachment,
       checklist,
