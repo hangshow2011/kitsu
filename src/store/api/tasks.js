@@ -56,7 +56,7 @@ export default {
       data.name +
       '&UE_Version=' +
       data.UE_Version
-    return client.pget(`http://192.168.20.2/api/file_exists` + commentData)
+    return client.pget(`/api/file_exists${commentData}`)
   },
 
   commentTask(data) {
