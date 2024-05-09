@@ -831,12 +831,33 @@ export default {
               )
             } else {
               alert(res.msg)
+              comment = `[${res.msg}]<br>${comment}</br>`
+              this.addCommentEnd(
+                comment,
+                attachment,
+                checklist,
+                taskStatusId,
+                (revision = undefined)
+              )
             }
           })
           .catch(err => {
             console.log('checkFileError')
             console.error(err)
-            alert(err.message)
+            if (err.response) {
+              alert(err.response.text)
+              comment = `[${err.response.text}]<br>${comment}</br>`
+            } else {
+              alert(err.message)
+              comment = `[${err.message}]<br>${comment}</br>`
+            }
+            this.addCommentEnd(
+              comment,
+              attachment,
+              checklist,
+              taskStatusId,
+              (revision = undefined)
+            )
           })
       } else {
         this.addCommentEnd(
