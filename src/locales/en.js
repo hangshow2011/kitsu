@@ -243,7 +243,8 @@ export default {
       in_task_status: 'Task Status',
       out_field_type: 'Trigger',
       out_task_type: 'Applied Task Type',
-      out_task_status: 'Applied Task Status'
+      out_task_status: 'Applied Task Status',
+      import_last_revision: "Import Last Revision",
     },
     entity_types: {
       asset: 'Asset',
@@ -1140,10 +1141,13 @@ export default {
   },
 
   settings: {
+    available_items: 'Available items',
     change_logo: 'Change logo',
     integrations: 'Integrations',
+    import_from_production: 'Import from another production',
     logo: 'Studio logo',
     no_logo: 'There is no logo set.',
+    no_more_available_items: 'There are no more items available to add.',
     remove_logo: 'Remove studio logo',
     set_logo: 'Set studio logo',
     title: 'Settings',
@@ -1160,7 +1164,7 @@ export default {
     },
     production: {
       empty_list: 'The list is currently empty. It means that all data from the main settings are available to users. Add some entries to limit choices for this production.',
-      empty_automation_list: 'There is no automation set for this production.'
+      empty_automation_list: 'There is no automation set for this production.',
     },
     save: {
       button: 'Save settings',

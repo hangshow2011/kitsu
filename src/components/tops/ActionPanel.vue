@@ -1266,20 +1266,21 @@ export default {
         })
     },
 
-    confirmAssign() {
+    async confirmAssign() {
       if (this.selectedPersonId || this.isInDepartment) {
-        this.loading.assignation = true
         const personId =
           this.isCurrentUserManager || this.isCurrentUserSupervisor
             ? this.selectedPersonId
             : this.user.id
-        this.assignSelectedTasks({
-          personId,
-          callback: () => {
-            this.loading.assignation = false
-            this.$refs['assignation-field'].clear()
-          }
-        })
+        this.loading.assignation = true
+        try {
+          await this.assignSelectedTasks({ personId })
+          this.$refs['assignation-field']?.clear()
+        } catch (err) {
+          console.error(err)
+        } finally {
+          this.loading.assignation = false
+        }
       }
     },
 
@@ -1644,45 +1645,48 @@ export default {
       this.autoChooseSelectBar()
     },
 
-    nbSelectedTasks() {
-      this.selectedTaskIds = Array.from(this.selectedTasks.keys())
-      if (this.nbSelectedTasks > 0) {
-        let isShotSelected = false
-        let isAssetSelected = false
-        this.setAvailableStatuses()
-        this.selectedTaskIds.forEach(taskId => {
-          const task = this.selectedTasks.get(taskId)
-          if (task && task.sequence_name) {
-            isShotSelected = true
+    nbSelectedTasks: {
+      immediate: true,
+      handler() {
+        this.selectedTaskIds = Array.from(this.selectedTasks.keys())
+        if (this.nbSelectedTasks > 0) {
+          let isShotSelected = false
+          let isAssetSelected = false
+          this.setAvailableStatuses()
+          this.selectedTaskIds.forEach(taskId => {
+            const task = this.selectedTasks.get(taskId)
+            if (task && task.sequence_name) {
+              isShotSelected = true
+            } else {
+              isAssetSelected = true
+            }
+          })
+          if (isShotSelected && isAssetSelected) {
+            this.customActions = this.allCustomActions
+          } else if (isShotSelected) {
+            this.customActions = this.shotCustomActions
           } else {
-            isAssetSelected = true
+            this.customActions = this.assetCustomActions
           }
-        })
-        if (isShotSelected && isAssetSelected) {
-          this.customActions = this.allCustomActions
-        } else if (isShotSelected) {
-          this.customActions = this.shotCustomActions
-        } else {
-          this.customActions = this.assetCustomActions
-        }
 
-        if (this.customActions.length > 0) {
-          const isUrlSelected =
-            this.customAction.url &&
-            this.customActions.findIndex(action => {
-              return action.id === this.customAction.id
-            }) >= 0
+          if (this.customActions.length > 0) {
+            const isUrlSelected =
+              this.customAction.url &&
+              this.customActions.findIndex(action => {
+                return action.id === this.customAction.id
+              }) >= 0
 
-          if (!isUrlSelected) {
-            this.customAction = this.customActions[0]
+            if (!isUrlSelected) {
+              this.customAction = this.customActions[0]
+            }
           }
-        }
 
-        if (this.nbSelectedTasks === 1) {
-          this.lastSelectedBar = this.selectedBar
-          this.selectedBar === ''
-        } else if (this.lastSelectedBar) {
-          this.selectedBar === this.lastSelectedBar
+          if (this.nbSelectedTasks === 1) {
+            this.lastSelectedBar = this.selectedBar
+            this.selectedBar === ''
+          } else if (this.lastSelectedBar) {
+            this.selectedBar === this.lastSelectedBar
+          }
         }
       }
     },
