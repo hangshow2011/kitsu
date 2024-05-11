@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import * as XLSX from 'xlsx'
 
 import { getPercentage } from '@/lib/stats'
 import stringHelpers from '@/lib/string'
@@ -121,15 +122,11 @@ const csv = {
   },
 
   buildCsvFile(name, entries) {
-    const csvContent = csv.turnEntriesToCsvString(entries)
-    const result =
-      'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
-    const link = document.createElement('a')
-    link.setAttribute('href', result)
-    link.setAttribute('download', `${name}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    return csvContent
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.aoa_to_sheet(entries)
+    XLSX.utils.book_append_sheet(wb, ws, name)
+
+    XLSX.writeFile(wb, `${name}.xlsx`)
   },
 
   generateStatReports(
@@ -405,16 +402,29 @@ const csv = {
 
   processCSV: (data, config = {}) => {
     return new Promise((resolve, reject) => {
-      Papa.parse(data, {
-        encoding: 'UTF-8',
-        error: reject,
-        transform: value => value.trim(),
-        complete: results => {
-          results.data[0].forEach(stringHelpers.capitalize)
-          resolve(results.data)
-        },
-        ...config
-      })
+      // is path .csv
+      if (data.name.endsWith('.csv')) {
+        Papa.parse(data, {
+          encoding: 'UTF-8',
+          error: reject,
+          transform: value => value.trim(),
+          complete: results => {
+            results.data[0].forEach(stringHelpers.capitalize)
+            resolve(results.data)
+          },
+          ...config
+        })
+      } else if (data.name.endsWith('.xlsx')) {
+        const reader = new FileReader()
+        reader.onload = function (e) {
+          const xlsx_data = e.target.result
+          const workbook = XLSX.read(xlsx_data, { type: 'array' })
+          const ws = workbook.Sheets[workbook.SheetNames[0]]
+          const data = XLSX.utils.sheet_to_json(ws, { header: 1 })
+          resolve(data)
+        }
+        reader.readAsArrayBuffer(data)
+      }
     })
   }
 }
