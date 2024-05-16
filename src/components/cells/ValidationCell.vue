@@ -53,6 +53,7 @@
           <template v-else>{{ person.initials }}</template>
         </span>
       </template>
+      <span class="dot" v-if="neesFileCheck()"></span>
       <span class="subscribed" v-if="task?.is_subscribed">
         <eye-icon size="0.8x" />
       </span>
@@ -175,7 +176,9 @@ export default {
       'isDarkTheme',
       'personMap',
       'taskMap',
-      'taskStatusMap'
+      'taskStatusMap',
+      'taskTypeMap',
+      'departmentMap'
     ]),
 
     assignees() {
@@ -248,6 +251,33 @@ export default {
         isShiftKey: event.shiftKey,
         isUserClick: event.isUserClick !== false
       })
+    },
+
+    neesFileCheck() {
+      if (this.taskTest) {
+        this.task = this.taskTest
+      } else if (this.column && this.entity?.validations) {
+        this.task = this.taskMap.get(
+          this.entity.validations.get(this.column.id)
+        )
+      }
+      if (this.task && this.task.task_type_id) {
+        const theTaskType = this.taskTypeMap.get(this.task.task_type_id)
+        const department = this.departmentMap.get(
+          theTaskType.department_id
+        ).name
+        if (
+          department.includes('角色') ||
+          department.includes('绑定') ||
+          department.includes('动画') ||
+          department.includes('特效') ||
+          department.includes('地编') ||
+          department.includes('角色模型')
+        ) {
+          return true
+        }
+      }
+      return false
     }
   },
 
@@ -367,5 +397,13 @@ export default {
   &.emergency {
     background-color: $red;
   }
+}
+
+.dot {
+  position: absolute;
+  right: -5px;
+  border: 4px solid;
+  color: red;
+  border-radius: 2px;
 }
 </style>
