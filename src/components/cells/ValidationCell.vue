@@ -53,7 +53,7 @@
           <template v-else>{{ person.initials }}</template>
         </span>
       </template>
-      <span class="dot" v-if="neesFileCheck()"></span>
+      <span class="dot" v-if="isNeedFileCheck"></span>
       <span class="subscribed" v-if="task?.is_subscribed">
         <eye-icon size="0.8x" />
       </span>
@@ -79,7 +79,8 @@ export default {
 
   data() {
     return {
-      task: null
+      task: null,
+      isNeedFileCheck: false
     }
   },
 
@@ -168,6 +169,66 @@ export default {
     } else if (this.column && this.entity?.validations) {
       this.task = this.taskMap.get(this.entity.validations.get(this.column.id))
     }
+    if (this.task && this.task.task_type_id) {
+      const theTaskType = this.taskTypeMap.get(this.task.task_type_id)
+      const department = this.departmentMap.get(theTaskType.department_id).name
+      if (
+        department.includes('角色') ||
+        department.includes('绑定') ||
+        department.includes('动画') ||
+        department.includes('特效') ||
+        department.includes('地编') ||
+        department.includes('角色模型')
+      ) {
+        const production = this.entity.project_name
+        const data = this.entity.data
+        let task_type = ''
+        let episodes = ''
+        let shot = ''
+        if (theTaskType.for_entity.includes('Shot')) {
+          task_type = theTaskType.name
+          episodes = this.entity.sequence_name.replaceAll('EP', '') ?? ''
+          shot = this.entity.name.replaceAll('SC', '') ?? ''
+        } else {
+          task_type = this.entity.asset_type_name ?? ''
+        }
+        const season = data.ji_shu ?? ''
+        const name = data.pin_yin_ming_cheng ?? ''
+        const number = data.bian_hao ?? ''
+        const UE_Version = data.ban_ben ?? 5
+        //--------------
+        const params = {
+          production,
+          department,
+          task_type,
+          season,
+          episodes,
+          shot,
+          number,
+          name,
+          UE_Version
+        }
+        const action = 'checkFileTask'
+        this.$store
+          .dispatch(action, params)
+          .then(res => {
+            console.log('checkFileThen:' + res.error_code)
+            if (res.result == 'true') {
+              this.isNeedFileCheck = false
+            } else {
+              this.isNeedFileCheck = true
+            }
+          })
+          .catch(err => {
+            console.log(err)
+            this.isNeedFileCheck = true
+          })
+      } else {
+        this.isNeedFileCheck = false
+      }
+    } else {
+      this.isNeedFileCheck = false
+    }
   },
 
   computed: {
@@ -178,7 +239,8 @@ export default {
       'taskMap',
       'taskStatusMap',
       'taskTypeMap',
-      'departmentMap'
+      'departmentMap',
+      'selectedValidations'
     ]),
 
     assignees() {
@@ -251,33 +313,6 @@ export default {
         isShiftKey: event.shiftKey,
         isUserClick: event.isUserClick !== false
       })
-    },
-
-    neesFileCheck() {
-      if (this.taskTest) {
-        this.task = this.taskTest
-      } else if (this.column && this.entity?.validations) {
-        this.task = this.taskMap.get(
-          this.entity.validations.get(this.column.id)
-        )
-      }
-      if (this.task && this.task.task_type_id) {
-        const theTaskType = this.taskTypeMap.get(this.task.task_type_id)
-        const department = this.departmentMap.get(
-          theTaskType.department_id
-        ).name
-        if (
-          department.includes('角色') ||
-          department.includes('绑定') ||
-          department.includes('动画') ||
-          department.includes('特效') ||
-          department.includes('地编') ||
-          department.includes('角色模型')
-        ) {
-          return true
-        }
-      }
-      return false
     }
   },
 
@@ -404,6 +439,6 @@ export default {
   right: -5px;
   border: 4px solid;
   color: red;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 </style>
