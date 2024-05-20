@@ -808,15 +808,25 @@ export default {
           shot = shot.replaceAll('SC', '') ?? ''
         } else {
           let asset = null
-          if (this.task.entity) asset = this.assetMap.get(this.task.entity.id)
-          else asset = this.assetMap.get(this.task.entity_id)
-          const data = asset.data
-          production = asset.project_name
-          task_type = asset.asset_type_name ?? ''
-          season = data.ji_shu ?? ''
-          name = data.pin_yin_ming_cheng ?? ''
-          number = data.bian_hao ?? ''
-          UE_Version = data.ban_ben ?? 5
+          let data = null
+          if (this.task.entity_data) {
+            data = this.task.entity_data
+            production = this.task.project_name
+            task_type = this.task.entity_type_name ?? ''
+            season = data.ji_shu ?? ''
+            name = data.pin_yin_ming_cheng ?? ''
+            number = data.bian_hao ?? ''
+            UE_Version = data.ban_ben ?? 5
+          } else {
+            asset = this.assetMap.get(this.task.entity.id)
+            data = asset.data
+            production = asset.project_name
+            task_type = asset.asset_type_name ?? ''
+            season = data.ji_shu ?? ''
+            name = data.pin_yin_ming_cheng ?? ''
+            number = data.bian_hao ?? ''
+            UE_Version = data.ban_ben ?? 5
+          }
         }
         //--------------
         const params = {
