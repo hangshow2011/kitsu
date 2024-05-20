@@ -1561,7 +1561,10 @@
             "animation":"动画",
             "effects":"特效",
             "maps":"地编",
-            "role_mode":"角色模型"
+            "role_mode":"角色模型",
+            "wait_approval":"审批中",
+            "completed":"完成",
+            "repair":"返修"
         }
     }
 }

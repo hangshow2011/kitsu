@@ -177,29 +177,52 @@ export default {
       const theTaskType = this.taskTypeMap.get(this.task.task_type_id)
       const department = this.departmentMap.get(theTaskType.department_id).name
       if (
-        department.includes('角色') ||
-        department.includes('绑定') ||
-        department.includes('动画') ||
-        department.includes('特效') ||
-        department.includes('地编') ||
-        department.includes('角色模型')
+        (department.includes(this.$t('doodle.role')) ||
+          department.includes(this.$t('doodle.binding')) ||
+          department.includes(this.$t('doodle.animation')) ||
+          department.includes(this.$t('doodle.effects')) ||
+          department.includes(this.$t('doodle.maps')) ||
+          department.includes(this.$t('doodle.role_mode'))) &&
+        (this.taskStatus.name.includes(this.$t('doodle.wait_approval')) ||
+          this.taskStatus.name.includes(this.$t('doodle.completed')) ||
+          this.taskStatus.name.includes(this.$t('doodle.repair')))
       ) {
-        const production = this.entity.project_name
-        const data = this.entity.data
+        let production = ''
         let task_type = ''
         let episodes = ''
         let shot = ''
+        let season = ''
+        let name = ''
+        let number = ''
+        let UE_Version = 5
         if (theTaskType.for_entity.includes('Shot')) {
+          const project = this.productionMap.get(this.task.project_id)
+          production = project.name
           task_type = theTaskType.name
-          episodes = this.entity.sequence_name.replaceAll('EP', '') ?? ''
-          shot = this.entity.name.replaceAll('SC', '') ?? ''
+          episodes = this.task.sequence_name.replaceAll('EP', '') ?? ''
+          const shot_name = this.task.entity_name.substring(
+            this.task.entity_name.lastIndexOf('/') + 1
+          )
+          shot = shot_name.replaceAll(' ', '')
+          shot = shot.replaceAll('SC', '') ?? ''
         } else {
-          task_type = this.entity.asset_type_name ?? ''
+          let asset = null
+          let data = null
+          if (this.task.entity_data) {
+            data = this.task.entity_data
+            production = this.task.project_name
+            task_type = this.task.entity_type_name ?? ''
+          } else {
+            asset = this.assetMap.get(this.task.entity.id)
+            data = asset.data
+            production = asset.project_name
+            task_type = asset.asset_type_name ?? ''
+          }
+          season = data.ji_shu ?? ''
+          name = data.pin_yin_ming_cheng ?? ''
+          number = data.bian_hao ?? ''
+          UE_Version = data.ban_ben ?? 5
         }
-        const season = data.ji_shu ?? ''
-        const name = data.pin_yin_ming_cheng ?? ''
-        const number = data.bian_hao ?? ''
-        const UE_Version = data.ban_ben ?? 5
         //--------------
         const params = {
           production,
@@ -244,7 +267,8 @@ export default {
       'taskStatusMap',
       'taskTypeMap',
       'departmentMap',
-      'selectedValidations'
+      'assetMap',
+      'productionMap'
     ]),
 
     assignees() {
