@@ -807,7 +807,9 @@ export default {
           shot = shot_name.replaceAll(' ', '')
           shot = shot.replaceAll('SC', '') ?? ''
         } else {
-          const asset = this.assetMap.get(this.task.entity.id)
+          let asset = null
+          if (this.task.entity) asset = this.assetMap.get(this.task.entity.id)
+          else asset = this.assetMap.get(this.task.entity_id)
           const data = asset.data
           production = asset.project_name
           task_type = asset.asset_type_name ?? ''
