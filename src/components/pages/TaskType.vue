@@ -286,7 +286,7 @@ import ComboboxNumber from '@/components/widgets/ComboboxNumber.vue'
 import EstimationHelper from '@/components/pages/tasktype/EstimationHelper.vue'
 import ImportModal from '@/components/modals/ImportModal.vue'
 import ImportRenderModal from '@/components/modals/ImportRenderModal.vue'
-import Schedule from '@/components/pages/schedule/Schedule.vue'
+import Schedule from '@/components/widgets/Schedule.vue'
 import SearchField from '@/components/widgets/SearchField.vue'
 import SearchQueryList from '@/components/widgets/SearchQueryList.vue'
 import TaskInfo from '@/components/sides/TaskInfo.vue'
@@ -719,11 +719,11 @@ export default {
       )
     },
 
-    scheduleTeam() {
+    team() {
       return sortPeople(
-        this.currentProduction.team.map(personId =>
-          this.personMap.get(personId)
-        )
+        this.currentProduction.team
+          .map(personId => this.personMap.get(personId))
+          .filter(person => !person.is_bot)
       )
     },
 
@@ -753,10 +753,9 @@ export default {
       'uploadTaskTypeEstimations'
     ]),
 
-    async initData(force) {
+    initData(force) {
       this.resetTasks()
       this.focusSearchField({ preventScroll: true })
-      await this.loadDaysOff()
       if (this.tasks.length < 2) {
         this.loading.entities = true
         this.errors.entities = false
@@ -804,19 +803,6 @@ export default {
             this.resetScheduleScroll()
           }
         })
-      }
-    },
-
-    async loadDaysOff() {
-      this.daysOffByPerson = []
-      for (const person of this.scheduleTeam) {
-        // load sequentially to avoid too many requests
-        const daysOff = await this.loadAggregatedPersonDaysOff({
-          personId: person.id
-        }).catch(
-          () => [] // fallback if not allowed to fetch days off
-        )
-        this.daysOffByPerson[person.id] = daysOff
       }
     },
 
@@ -1060,7 +1046,7 @@ export default {
       csv.buildCsvFile(name, taskLines)
     },
 
-    updateEstimation({ taskId, days, item }) {
+    updateEstimation({ taskId, days, item, daysOff }) {
       const estimation = daysToMinutes(this.organisation, days)
       const task = this.taskMap.get(taskId)
       let data = { estimation }
@@ -1070,7 +1056,8 @@ export default {
       data = getDatesFromStartDate(
         startDate,
         dueDate,
-        minutesToDays(this.organisation, estimation)
+        minutesToDays(this.organisation, estimation),
+        daysOff
       )
       data.estimation = estimation
       if (item) {
@@ -1088,24 +1075,30 @@ export default {
 
     // Schedule
 
-    resetScheduleItems() {
+    async resetScheduleItems() {
       const taskAssignationMap = this.buildAssignationMap()
-      let scheduleItems = this.scheduleTeam
+
+      const assignees = Object.keys(taskAssignationMap).filter(
+        id => id !== 'unassigned' && taskAssignationMap[id].length > 0
+      )
+      await this.loadDaysOff(assignees)
+
+      const scheduleItems = this.team
         .map(person => this.buildPersonElement(person, taskAssignationMap))
-        .filter(item => item)
+        .filter(Boolean)
         .filter(item => item.children.length > 0)
 
-      if (taskAssignationMap.unassigned.length !== 0) {
-        scheduleItems = scheduleItems.concat([
+      if (taskAssignationMap.unassigned.length > 0) {
+        scheduleItems.push(
           this.buildPersonElement({ id: 'unassigned' }, taskAssignationMap)
-        ])
+        )
       }
       this.schedule.scheduleItems = scheduleItems
     },
 
     buildAssignationMap() {
       const taskAssignationMap = { unassigned: [] }
-      this.scheduleTeam.forEach(person => {
+      this.team.forEach(person => {
         if (person) taskAssignationMap[person.id] = []
       })
       this.tasks.forEach(task => {
@@ -1121,6 +1114,19 @@ export default {
         }
       })
       return taskAssignationMap
+    },
+
+    async loadDaysOff(personIds) {
+      this.daysOffByPerson = []
+      for (const personId of personIds) {
+        // load sequentially to avoid too many requests
+        const daysOff = await this.loadAggregatedPersonDaysOff({
+          personId: personId
+        }).catch(
+          () => [] // fallback if not allowed to fetch days off
+        )
+        this.daysOffByPerson[personId] = daysOff
+      }
     },
 
     buildPersonElement(person, taskAssignationMap) {
@@ -1191,7 +1197,11 @@ export default {
         } else if (task.end_date) {
           endDate = parseDate(task.end_date)
         } else if (task.estimation) {
-          endDate = startDate.clone().add(estimation, 'days')
+          endDate = addBusinessDays(
+            task.startDate,
+            Math.ceil(minutesToDays(this.organisation, task.estimation)) - 1,
+            task.parentElement.daysOff
+          )
         }
 
         if (!endDate || endDate.isBefore(startDate)) {
@@ -1261,7 +1271,8 @@ export default {
       if (item.estimation) {
         item.endDate = addBusinessDays(
           item.startDate,
-          Math.ceil(minutesToDays(this.organisation, item.estimation)) - 1
+          Math.ceil(minutesToDays(this.organisation, item.estimation)) - 1,
+          item.parentElement.daysOff
         )
       }
       if (item.startDate && item.endDate) {

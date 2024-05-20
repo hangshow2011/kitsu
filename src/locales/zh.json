@@ -1552,6 +1552,16 @@
         "wrong_browser": {
             "title": "Kitsu不支持您的浏览器",
             "text": "itsu 只能与 Firefox 和 Chrome 浏览器一起使用。"
+        },
+
+        "doodle":
+        {
+            "role":"角色",
+            "binding":"绑定",
+            "animation":"动画",
+            "effects":"特效",
+            "maps":"地编",
+            "role_mode":"角色模型"
         }
     }
 }

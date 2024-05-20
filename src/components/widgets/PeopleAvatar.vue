@@ -42,6 +42,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
   name: 'people-avatar',
 
@@ -69,8 +71,11 @@ export default {
   },
 
   computed: {
+    ...mapGetters(['isDarkTheme']),
+
     style() {
       return {
+        color: this.isDarkTheme ? '#333' : '#FFF',
         width: `${this.size}px`,
         height: `${this.size}px`,
         fontSize: this.person.has_avatar ? 0 : `${this.fontSize}px`,
@@ -83,8 +88,10 @@ export default {
 
 <style lang="scss" scoped>
 .avatar {
+  color: #333;
   display: flex;
   align-items: center;
+  font-weight: bold;
   justify-content: center;
   position: relative;
   flex-shrink: 0;

@@ -48,7 +48,7 @@ export default {
   name: 'file-upload',
   props: {
     accept: {
-      default: '.csv',
+      default: '.csv,.xlsx',
       type: String
     },
     isPrimary: {
