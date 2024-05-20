@@ -1556,8 +1556,6 @@
 
         "doodle":
         {
-            "auto_light":"自动灯光",
-            "start_up":"启动",
             "role":"角色",
             "binding":"绑定",
             "animation":"动画",
